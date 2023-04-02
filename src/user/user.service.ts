@@ -3,37 +3,66 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './user.entity';
 import { Profile } from '../profile/profile.entity';
+import * as bcrypt from 'bcrypt';
+import { CreateUserWithProfileDto } from './dto/create-user-with-profile.dto';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
+    private readonly profileRepository: Repository<Profile>,
   ) {}
 
-  async findByEmail(email: string): Promise<User> {
-    return this.usersRepository.findOne( {{ where: {email: email} });
+  async findByEmailOrLogin(emailOrLogin: string): Promise<User> {
+    const user = await this.usersRepository.findOne({
+      where: [{ email: emailOrLogin }, { login: emailOrLogin }],
+    });
+    return user;
   }
 
-  async findByLogin(login: string): Promise<User> {
-    return this.usersRepository.findBy({ where: {login: login} });
-  }
+  async create(userDto: CreateUserWithProfileDto): Promise<User> {
+    const { user: userFromRequest, profile } = userDto;
+    const { login, email, password } = userFromRequest;
+    const saltRounds = 10;
+    const salt = await bcrypt.genSalt(saltRounds);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    const user: Partial<User> = {
+      login,
+      email,
+      password: hashedPassword,
+      profile,
+    };
+    const savedUser = await this.usersRepository.save(user);
 
-  async create(email: string, password: string, profile: Profile): Promise<User> {
-    const user = new User();
-    user.email = email;
-    user.password = password;
-    user.profile = profile;
-    return this.usersRepository.save(user);
+    if (profile) {
+      const savedProfile = await this.profileRepository.save({
+        ...profile,
+        user: savedUser,
+      });
+
+      return {
+        ...savedUser,
+        profile: savedProfile,
+      };
+    }
+
+    return { ...savedUser };
   }
 
   async findOne(id: number): Promise<User> {
-    return this.usersRepository.findOne({where: {id: id}, relations: ['profile'] });
+    return this.usersRepository.findOne({
+      where: { id: id },
+      relations: ['profile'],
+    });
   }
 
   async update(id: number, data: Partial<User>): Promise<User> {
     await this.usersRepository.update(id, data);
-    return this.usersRepository.findOne({where: {id: id}, relations: ['profile'] });
+    return this.usersRepository.findOne({
+      where: { id: id },
+      relations: ['profile'],
+    });
   }
 
   async remove(id: number): Promise<void> {

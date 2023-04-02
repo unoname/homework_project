@@ -1,15 +1,22 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuthModule } from './auth/auth.module';
+import { AuthService } from './auth/auth.service';
 import { ProfileModule } from './profile/profile.module';
+import { UserModule } from './user/user.module';
+import { JwtStrategy } from './auth/jwt.strategy';
+import { TextBlockModule } from './text-block/text-block.module';
+import { SaveFileModule } from './save-file/save-file.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
-        envFilePath: `.${process.env.NODE_ENV}.env`
-      }),
+      envFilePath: `.${process.env.NODE_ENV}.env`,
+    }),
     TypeOrmModule.forRootAsync({
-      inject: [ConfigService],
+      imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
         host: configService.get('POSTGRES_HOST'),
@@ -20,8 +27,14 @@ import { ProfileModule } from './profile/profile.module';
         autoLoadEntities: true,
         synchronize: configService.get('SYNCHRONIZE') || false,
       }),
+      inject: [ConfigService],
     }),
     ProfileModule,
+    UserModule,
+    AuthModule,
+    TextBlockModule,
+    SaveFileModule,
   ],
+  providers: [AuthService, JwtService, ConfigService, JwtStrategy],
 })
 export class AppModule {}

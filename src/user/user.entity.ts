@@ -1,18 +1,35 @@
-import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  OneToOne,
+  JoinColumn,
+  Unique,
+} from 'typeorm';
 import { Profile } from '../profile/profile.entity';
+import { Roles } from './roles.enum';
 
 @Entity()
+@Unique(['email', 'login'])
 export class User {
-@PrimaryGeneratedColumn()
-id: number;
+  @PrimaryGeneratedColumn()
+  id: number;
 
-@Column({unique: true})
-email: string;
+  @Column()
+  email: string;
 
-@Column()
-password: string;
+  @Column()
+  login: string;
 
-@OneToOne(() => Profile, { cascade: true })
-@JoinColumn()
-profile: Profile;
+  @Column()
+  password: string;
+
+  @Column({
+    default: Roles.USER,
+  })
+  roles: Roles[];
+
+  @OneToOne(() => Profile, { cascade: true })
+  @JoinColumn()
+  profile: Profile;
 }

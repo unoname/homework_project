@@ -1,15 +1,24 @@
-import { Controller, Get, Post, Body, Param, Patch, Delete, UseGuards} from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Patch,
+  Delete,
+  UseGuards,
+} from '@nestjs/common';
 import { ProfileService } from './profile.service';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-
+import { JwtStrategy } from 'src/auth/jwt.strategy';
+import { CreateProfileDto } from './dto/creatr-profile.dto';
 
 @Controller('profile')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtStrategy)
 export class ProfileController {
   constructor(private readonly profileService: ProfileService) {}
 
   @Post()
-  async create(@Body() data: any) {
+  async create(@Body() data: CreateProfileDto) {
     const profile = await this.profileService.create(data.userId, data);
     return { profile };
   }

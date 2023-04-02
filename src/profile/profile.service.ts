@@ -12,21 +12,27 @@ export class ProfileService {
 
   async create(userId: number, data: any): Promise<Profile> {
     const profile = new Profile();
-    profile.fullName = data.fullName;    
+    profile.fullName = data.fullName;
     profile.phone = data.phone;
     profile.user = { id: userId } as any;
-    return await this.profileRepository.save(profile, { relations: ['user'] });
+    return await this.profileRepository.save(profile);
   }
 
   async findByID(id: number): Promise<Profile> {
-    return await this.profileRepository.findOne(id, { relations: ['user'] });
+    return await this.profileRepository.findOne({
+      where: { id: id },
+      relations: ['user'],
+    });
   }
 
   async update(id: number, data: any): Promise<Profile> {
-    const profile = await this.profileRepository.findOne(id, { relations: ['user'] });
-    profile.fullName = data.firstName || profile.fullName;    
+    const profile = await this.profileRepository.findOne({
+      where: { id: id },
+      relations: ['user'],
+    });
+    profile.fullName = data.firstName || profile.fullName;
     profile.phone = data.phone || profile.phone;
-    return await this.profileRepository.save(profile, { relations: ['user'] });
+    return await this.profileRepository.save(profile);
   }
 
   async remove(id: number): Promise<void> {
