@@ -1,8 +1,11 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { ConfigService } from '@nestjs/config';
 
 async function start() {
   const app = await NestFactory.create(AppModule);
-  await app.listen(3000, () => console.log(`App start on port`));
+  const configService = app.get(ConfigService); // получаем ConfigService
+  const port = configService.get<number>('PORT'); // получаем порт из .env файла
+  await app.listen(port, () => console.log(`App start on port ${port}`));
 }
 start();
